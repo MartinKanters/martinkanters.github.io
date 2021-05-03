@@ -1,0 +1,77 @@
+baseURL = "https://martinkanters.dev/"
+languageCode = "en"
+DefaultContentLanguage = "en"
+title = "Martin Kanters - Tech blog"
+theme = "anatole"
+
+[params]
+
+# Left menu
+displayMode = "dark"
+author = "Martin Kanters"
+description = """
+occassionally blogs about 
+his tech endeavours
+"""
+
+profilePicture = "images/avatar.png"
+
+# TODO: fav icon
+# Socials
+  [[params.socialIcons]]
+  icon = "fab fa-github"
+  title = "GitHub"
+  url = "https://github.com/MartinKanters"
+
+  [[params.socialIcons]]
+  icon = "fab fa-twitter"
+  title = "Twitter"
+  url = "https://twitter.com/MartinKanters"
+
+  [[params.socialIcons]]
+  icon = "fas fa-at"
+  title = "E-Mail"
+  url = "mailto:mail@martinkanters.dev"
+
+  [[params.socialIcons]]
+  icon = "fab fa-linkedin"
+  title = "LinkedIn"
+  url = "https://www.linkedin.com/in/martin-kanters-54b04464/"
+
+[menu]
+
+  [[menu.main]]
+  name = "Home"
+  identifier = "home"
+  weight = 100
+  url = "/"
+
+  [[menu.main]]
+  name = "Posts"
+  weight = 200
+  identifier = "posts"
+  url = "/posts/"
+
+  [[menu.main]]
+  name = "About"
+  weight = 300
+  identifier = "about"
+  url = "/about/"
+
+# Others
+enableEmoji = true
+enableRobotsTXT = true
+
+# Syntax highlighting
+pygmentsUseClasses = true
+pygmentsCodeFences = true
+pygmentsCodefencesGuessSyntax = true
+
+# TODO:
+# GA
+#googleAnalytics = "UA-123-45"
+# Google Site Verification
+#googleSiteVerify = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+# TODO: Enable Disqus
+#disqusShortname = ""
