@@ -16,7 +16,6 @@ his tech endeavours
 
 profilePicture = "images/avatar.png"
 
-# TODO: fav icon
 # Socials
   [[params.socialIcons]]
   icon = "fab fa-github"
