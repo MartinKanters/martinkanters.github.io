@@ -8,6 +8,7 @@ theme = "anatole"
 
 # Left menu
 displayMode = "dark"
+title = "Martin Kanters"
 author = "Martin Kanters"
 description = """
 occassionally blogs about 
