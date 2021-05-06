@@ -31,4 +31,4 @@ Running one Docker container is easy, but this is often not enough for a company
 
 In this part we learned why containerization is exercised in IT. We then followed up with Docker, the current most popular tool for creating and managing images and containers.  
 In the next part we will dive deep into Kubernetes, a tool for orchestrating multiple containers. 
-[Read all about it here](/posts/an-introduction-of-containerization-in-it-part2).
+[Read all about it here](/an-introduction-of-containerization-in-it-part2).
