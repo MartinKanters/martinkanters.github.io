@@ -16,6 +16,14 @@ his tech endeavours
 """
 
 profilePicture = "images/avatar.png"
+gtagId = "G-XVJ8L7CN7V" # google analytics
+
+# TODO:
+# Google Site Verification
+#googleSiteVerify = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+# TODO: Enable Disqus
+#disqusShortname = ""
 
 # Socials
   [[params.socialIcons]]
@@ -66,12 +74,3 @@ enableRobotsTXT = true
 pygmentsUseClasses = true
 pygmentsCodeFences = true
 pygmentsCodefencesGuessSyntax = true
-
-# TODO:
-# GA
-#googleAnalytics = "UA-123-45"
-# Google Site Verification
-#googleSiteVerify = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-# TODO: Enable Disqus
-#disqusShortname = ""
