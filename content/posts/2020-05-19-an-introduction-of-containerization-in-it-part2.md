@@ -1,5 +1,6 @@
 ---
 title: "An introduction of containerization in IT pt. 2"
+url: an-introduction-of-containerization-in-it-part2
 date: 2020-05-19T21:57:00+02:00
 draft: false
 ---

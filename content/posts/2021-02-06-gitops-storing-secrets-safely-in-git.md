@@ -1,5 +1,6 @@
 ---
 title: "GitOps: Storing secrets safely in Git"
+url: gitops-storing-secrets-safely-in-git
 date: 2021-02-06T16:05:00+02:00
 draft: false
 ---
