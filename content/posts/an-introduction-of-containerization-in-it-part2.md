@@ -1,7 +1,7 @@
 ---
 title: "An introduction of containerization in IT pt. 2"
-date: 2020-05-19T21:57:00+02:00 # TODO
-draft: true
+date: 2020-05-19T21:57:00+02:00
+draft: false
 ---
 
 In the [last part](/posts/an-introduction-of-containerization-in-it-part1) we learned about many typical use cases of containers in IT.

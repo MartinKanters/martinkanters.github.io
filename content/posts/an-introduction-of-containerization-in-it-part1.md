@@ -1,7 +1,7 @@
 ---
 title: "An introduction of containerization in IT pt. 1"
-date: 2020-05-19T21:57:00+02:00
-draft: true
+date: 2020-05-19T21:56:00+02:00
+draft: false
 ---
 
 Containers are relatively new in IT and are here to stay. In this article I would like to give an introduction of containerization. I hope to explain some use cases and workings by explaining the current most popular platforms in high-level.
