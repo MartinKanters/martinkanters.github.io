@@ -3,6 +3,13 @@ languageCode = "en"
 DefaultContentLanguage = "en"
 title = "Martin Kanters - Tech blog"
 theme = "anatole"
+enableEmoji = true
+enableRobotsTXT = true
+
+# Syntax highlighting
+pygmentsUseClasses = true
+pygmentsCodeFences = true
+pygmentsCodefencesGuessSyntax = true
 
 [params]
 
@@ -65,12 +72,3 @@ gtagId = "G-XVJ8L7CN7V" # google analytics
   weight = 300
   identifier = "about"
   url = "/about/"
-
-# Others
-enableEmoji = true
-enableRobotsTXT = true
-
-# Syntax highlighting
-pygmentsUseClasses = true
-pygmentsCodeFences = true
-pygmentsCodefencesGuessSyntax = true
