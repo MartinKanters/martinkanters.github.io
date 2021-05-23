@@ -394,5 +394,5 @@ While it certainly looks like a lot of code for a blogpost, it is really not a l
 Metacontroller allows you to easily extend Kubernetes with powerful features, using simple APIs.
 If you also think this is interesting, I encourage you to read about the [Decorator Controller](https://metacontroller.github.io/metacontroller/api/decoratorcontroller.html).
 This allows for changing the parent resource, in contrary to managing its children.
-[Customize Hooks](https://metacontroller.github.io/metacontroller/api/customize.html) (currently) allow for enhancing the webhook requests with related resources. 
+[Customize Hooks](https://metacontroller.github.io/metacontroller/api/customize.html) (currently only) allows for enhancing the webhook requests with related resources. 
 This is extremely useful for when desired state should be calculated based on other resources than the parent and child resources.
