@@ -7,9 +7,9 @@ enableEmoji = true
 enableRobotsTXT = true
 
 # Syntax highlighting
-pygmentsUseClasses = true
-pygmentsCodeFences = true
-pygmentsCodefencesGuessSyntax = true
+pygmentsUseClasses = false
+pygmentsCodeFences = false
+pygmentsCodefencesGuessSyntax = false
 
 [params]
 

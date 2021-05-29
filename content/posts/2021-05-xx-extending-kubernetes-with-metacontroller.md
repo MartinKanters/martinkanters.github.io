@@ -77,7 +77,7 @@ After defining the interface as a CRD and deploying that to the cluster, the dev
 
 But first, here is the definition of the CRD:
 
-```yaml
+{{< highlight yaml >}}
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
@@ -94,7 +94,7 @@ spec:
   scope: Namespaced
   subresources:
     status: {}
-```
+{{< /highlight >}}
 
 This YAML can be applied to your Kubernetes cluster like any other resource definition. 
 While this is all that is needed to add your own resource definition, usually these manifests contain a [spec schema](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#specifying-a-structural-schema) defined in the [Open API](https://www.openapis.org/) standard. 
@@ -106,7 +106,7 @@ We skip that to keep our example brief and simple.
 Once developers deploy resources of our PythonLambda type, we have to act. 
 This is where the CompositeController comes in:
 
-```yaml
+{{< highlight yaml >}}
 apiVersion: metacontroller.k8s.io/v1alpha1
 kind: CompositeController
 metadata:
@@ -138,7 +138,7 @@ spec:
     sync:
       webhook:
         url: http://webhook-python-lambda-operator.python-lambda-operator/sync
-```
+{{< /highlight >}}
 
 We define a controller of the type CompositeController and tell it to watch a certain parent resource type: the `pythonlambdas` type.
 We also define what kind of child resources can be created and managed under this parent resource. 
@@ -160,7 +160,7 @@ This service can be written in any programming language, given it has HTTP serve
 I have chosen Python as language, since it allows us to create an HTTP server containing the business logic in one file.
 A snippet of the webservice is shown below. The full script [can be found here](https://github.com/MartinKanters/python-lambda-operator/blob/master/operator/sync.py).
 
-```python
+{{< highlight python >}}
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import json
 
@@ -200,44 +200,21 @@ class Controller(BaseHTTPRequestHandler):
 
     return {"status": observed_status, "children": desired_children}
 
-  def create_config_map(self, parent, lambda_code):
-    ...
-    return {
-      "apiVersion": "v1",
-      "kind": "ConfigMap",
-    ...
-
-  def create_pod(self, parent, i):
-    return {
-      "apiVersion": "v1",
-      "kind": "Pod",
-      ...
-
-  def create_service(self, parent):
-    return {
-      "apiVersion": "v1",
-      "kind": "Service",
-      ...
-
-  def create_ingress(self, parent, host):
-    return {
-      "apiVersion": "networking.k8s.io/v1beta1",
-      "kind": "Ingress",
-      ...
+  ...
 
 HTTPServer(("", 80), Controller).serve_forever()
-```
+{{< /highlight >}}
 
 Alright, there is already a lot to digest here. Before showing the methods that create the actual child manifests, let us first understand the two method at the top:
 
- - `def do_POST(self):` 
+ - {{< highlight python >}}def do_POST(self):{{< /highlight >}}
  
    The handler which is called when the POST request is invoked. 
    It basically reads the request body as JSON and stores it in a variable called `observed`. This contains the monitored `PythonLambda` resource, along with any children that were perhaps created in earlier runs. 
    Can also be seen as the **Current State**. 
    It calls the next method to prepare the HTTP response.
 
- - `def sync(self, parent, children):` 
+ - {{< highlight python >}}def sync(self, parent, children):{{< /highlight >}}
  
    This method is responsible for calculating the children based on the request data. 
    This is called the **Desired State**. 
@@ -246,17 +223,13 @@ Alright, there is already a lot to digest here. Before showing the methods that 
 
 The snippet below shows two of the four methods generating child resources:
 
-```python
+{{< highlight python >}}
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import json
 
 class Controller(BaseHTTPRequestHandler):
 
-  def do_POST(self):
-    ...
-
-  def sync(self, parent, children):
-    ...
+  ...
 
   def create_config_map(self, parent, lambda_code):
     indented_code = map(lambda line: "    " + line, lambda_code.split('\n'))
@@ -343,14 +316,14 @@ HTTPServer(("", 80), Controller).serve_forever()
       ...
 
 HTTPServer(("", 80), Controller).serve_forever()
-```
+{{< /highlight >}}
 
 Let us take a look at those methods:
- - `def create_config_map(self, parent, lambda_code):` 
+ - {{< highlight python >}}def create_config_map(self, parent, lambda_code):{{< /highlight >}}
  
    This method generates the Python script for starting an HTTP Server (seems familiar?, where the custom script of the developer (`lambda_code`) is concatenated into the GET method handler.
 
- - `def create_pod(self, parent, i):` 
+ - {{< highlight python >}}def create_pod(self, parent, i):{{< /highlight >}}
 
    This method generates the `Pod` which contains a container built from a Python image. 
    The `ConfigMap` of above is mounted in the container in order for the container to run it. 
@@ -362,7 +335,7 @@ Let us take a look at those methods:
 Now we've got all pieces for running our `PythonLambda` with some custom code.
 Here is an example which reads in the `name` query parameter, reverses that and writes that to the response body:
 
-```yaml
+{{< highlight yaml >}}
 apiVersion: example.com/v1
 kind: PythonLambda
 metadata:
@@ -375,7 +348,7 @@ spec:
     output = "Hello %s! Your name in reverse is %s" % (name, reverse_name)
   replicas: 2
   host: example.com
-```
+{{< /highlight >}}
 
 As explained in the "webhook service implementation" chapter, the three lines of code are combined with a Python HTTP Server template and put in a `ConfigMap`.
 The `replicas` parameter ensures that two `Pods` are spun up running the code from the `ConfigMap`. 
@@ -383,10 +356,10 @@ An `Ingress` resource is configured for the `example.com` host.
 
 Now the following request can be done:
 
-```sh
+{{< highlight bash >}}
 $ curl -XGET example.com?name=Martin
 Hello Martin! Your name in reverse is nitraM
-```
+{{< /highlight >}}
 
 # Conclusion
 
