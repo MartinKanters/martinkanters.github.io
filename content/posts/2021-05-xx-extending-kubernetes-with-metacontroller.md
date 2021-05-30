@@ -1,8 +1,7 @@
 ---
 title: "Extending Kubernetes with Metacontroller"
 url: extending-kubernetes-with-metacontroller
-date: 2021-05-09T00:00:00+02:00 # TODO - change
-draft: true
+date: 2021-05-30T15:51:00+02:00
 ---
 
 Kubernetes is great for many reasons. It is very good for orchestrating workload over multiple nodes in a cluster. But I think that the extensibility of it is what makes Kubernetes so powerful. This gives us endless possibilities.
