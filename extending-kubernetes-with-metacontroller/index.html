@@ -1,0 +1,251 @@
+<!doctype html><html dir=ltr lang=en data-theme=dark><head><title>Martin Kanters | Extending Kubernetes with Metacontroller</title><meta charset=utf-8><meta name=generator content="Hugo 0.81.0"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name=description content="occassionally blogs about 
+his tech endeavours
+"><link rel=stylesheet href=/css/main.min.f79a5de55310cc058fc81804d033ddb955937d778bd533d9ea05b1c798501013.css integrity="sha256-95pd5VMQzAWPyBgE0DPduVWTfXeL1TPZ6gWxx5hQEBM=" crossorigin=anonymous type=text/css><link rel=stylesheet href=/css/markupHighlight.min.f798cbda9aaa38f89eb38be6414bd082cfd71a6780375cbf67b6d2fb2b96491e.css integrity="sha256-95jL2pqqOPies4vmQUvQgs/XGmeAN1y/Z7bS+yuWSR4=" crossorigin=anonymous type=text/css><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin=anonymous><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=canonical href=/extending-kubernetes-with-metacontroller/><script type=text/javascript src=/js/anatole-header.min.0c05c0a90d28c968a1cad4fb31abd0b8e1264e788ccefed022ae1d3b6f627514.js integrity="sha256-DAXAqQ0oyWihytT7MavQuOEmTniMzv7QIq4dO29idRQ=" crossorigin=anonymous></script><script type=text/javascript src=/js/anatole-theme-switcher.min.7fd87181cdd7e8413aa64b6867bb32f3a8dc242e684fc7d5bbb9f600dbc2b6eb.js integrity="sha256-f9hxgc3X6EE6pktoZ7sy86jcJC5oT8fVu7n2ANvCtus=" crossorigin=anonymous></script><meta name=twitter:card content="summary"><meta name=twitter:title content="Extending Kubernetes with Metacontroller"><meta name=twitter:description content="Kubernetes is great for many reasons. It is very good for orchestrating workload over multiple nodes in a cluster. But I think that the extensibility of it is what makes Kubernetes so powerful. This gives us endless possibilities.
+Kubernetes controllers As said in the intro, Kubernetes is a platform for orchestrating containerized workloads across a cluster. One of the key components of the cluster is the control plane. The control plane contains components which ensures that Kubernetes actualizes the &ldquo;desired state&rdquo;."></head><body><div class="sidebar animated fadeInDown"><div class=logo-title><div class=title><img src=/images/avatar.png alt="profile picture"><h3 title><a href=/>Martin Kanters</a></h3><div class=description><p>occassionally blogs about<br>his tech endeavours<br></p></div></div></div><ul class=social-links><li><a href=https://github.com/MartinKanters rel=me aria-label=GitHub><i class="fab fa-github fa-2x" aria-hidden=true></i></a></li><li><a href=https://twitter.com/MartinKanters rel=me aria-label=Twitter><i class="fab fa-twitter fa-2x" aria-hidden=true></i></a></li><li><a href=mailto:mail@martinkanters.dev rel=me aria-label=E-Mail><i class="fas fa-at fa-2x" aria-hidden=true></i></a></li><li><a href=https://www.linkedin.com/in/martin-kanters-54b04464/ rel=me aria-label=LinkedIn><i class="fab fa-linkedin fa-2x" aria-hidden=true></i></a></li></ul><div class=footer><div class=by_farbox>&copy; Martin Kanters 2021</div></div></div><div class=main><div class="page-top animated fadeInDown"><a role=button class=navbar-burger data-target=navMenu aria-label=menu aria-expanded=false><span aria-hidden=true></span><span aria-hidden=true></span><span aria-hidden=true></span></a><ul class=nav id=navMenu><li><a href=/ title>Home</a></li><li><a href=/posts/ title>Posts</a></li><li><a href=/about/ title>About</a></li><li class=theme-switch-item><a class=theme-switch title="Switch Theme"><i class="fas fa-adjust fa-fw" aria-hidden=true></i></a></li></ul></div><div class=autopagerize_page_element><div class=content><div class="post animated fadeInDown"><div class=post-content><div class=post-title><h3>Extending Kubernetes with Metacontroller</h3></div><p>Kubernetes is great for many reasons. It is very good for orchestrating workload over multiple nodes in a cluster. But I think that the extensibility of it is what makes Kubernetes so powerful. This gives us endless possibilities.</p><h1 id=kubernetes-controllers>Kubernetes controllers</h1><p>As said in the intro, <a href=https://kubernetes.io/>Kubernetes</a> is a platform for orchestrating containerized workloads across a cluster.
+One of the key components of the cluster is the control plane.
+The control plane contains <a href=https://kubernetes.io/docs/concepts/overview/components/#control-plane-components>components</a> which ensures that Kubernetes actualizes the &ldquo;desired state&rdquo;.
+The desired state is the thing that the user defines in <code>YAML</code> or <code>JSON</code> format.
+One example is that the user can define a <code>Deployment</code> of two replicas. As a result, the control plane ensures that ultimately two <code>Pods</code> are spun up.</p><p>Kubernetes achieves this by employing the controller pattern.
+A controller is responsible for making the current state of the cluster, the desired state.
+It does so by tracking at least one Kubernetes resource type.
+This can be a <code>Deployment</code>, <code>Job</code> or a custom type (defined by a Custom Resource Definition - <code>CRD</code>).</p><p>This article explains how to create custom controllers and resources.
+Several frameworks are built to facilitate this, for example <a href=https://book.kubebuilder.io/>kubebuilder</a>, <a href=https://kudo.dev/>KUDO</a> and <a href=https://metacontroller.github.io/metacontroller/>Metacontroller</a>.
+For this article we will use Metacontroller.</p><h1 id=metacontroller>Metacontroller</h1><p>Creating a controller using tools, such as kubebuilder, can be really difficult.
+It requires deep knowledges of both the Kubernetes inner workings and the Golang language.
+Metacontroller takes away that complexity, allowing people to create controllers in a relatively simple manner.
+By implementing Metacontroller CRDs, users define which resource type should be watched, also called the parent resource.</p><p>So, how does it work?
+Once such a resource changes, an HTTP webhook is executed against a configurable URL.
+The URL will typically be pointed to an HTTP endpoint, which is created and managed by the user.
+The endpoint&rsquo;s implementation calculates the desired state based on the data in the request and returns that in the response.
+The request contains, among other data, the (watched) parent resource.
+Lastly, Metacontroller ensures that the desired state is applied to the cluster.</p><p>That is right, Metacontroller just calls an HTTP endpoint once a watched resource changes.
+There are no limitations to the technology that can be used for building the webservice containing the HTTP endpoint with.
+Also, there are no difficult low-level Kubernetes concepts to deal with.</p><h2 id=controller-types>Controller types</h2><p>Metacontroller offers two different controller types:</p><ul><li>The composite controller allows developers to create and manage new child resources. Think of a <code>Deployment</code> managing <code>ReplicaSets</code>, which itself manages <code>Pods</code>.</li><li>The decorator controller allows for changing the watched parent resource itself. Think of a controller automatically adding sidecars to <code>Pods</code>.</li></ul><p>This article will show an example of the former one, the composite controller.</p><h1 id=put-into-practice---pythonlambda-operator>Put into practice - PythonLambda Operator</h1><p>So, the composite controller can spawn and manage child resources.
+Let&rsquo;s think of an example project which illustrates a use-case. Perhaps something that is easily configured on the surface, but requires quite some machinery to work&mldr;</p><p>Introducing&mldr; the <strong>PythonLambda operator</strong>!</p><p>Python refers to the programming language (surprisingly not the snake), and &ldquo;Lambda&rdquo; is a wink to the AWS Function-as-a-Service capability.
+With a Function-as-a-Service, developers only have to care about the code they want to run.
+The infrastructure takes care of hosting it and scaling it up and down depending on the load.
+This article explains how to utilize Metacontroller to create a simple Function-as-a-Service capability yourself (who needs a cloud vendor nowadays?).
+As promised, the developer will only have to define a single resource defining his code, and our operator will take care of the rest.</p><h4 id=operator>Operator?</h4><p>You may be thinking, where is the term &ldquo;operator&rdquo; suddenly coming from?
+Well, it is not universely defined, but it&rsquo;s often referred to as a Kubernetes-native application.
+The following quote is part of the definion from the <a href=https://operatorframework.io/>Operator Framework</a>:</p><blockquote><p>With Operators you can stop treating an application as a collection of primitives like Pods, Deployments, Services or ConfigMaps, but instead as a single object that only exposes the knobs that make sense for the application.</p></blockquote><p><em>source: <a href=https://operatorframework.io/>https://operatorframework.io/</a></em></p><h2 id=overview>Overview</h2><p><img src=/images/posts/python-lambda-operator-overview.png alt="&ldquo;Component overview of the PythonLambda Operator&rdquo;" title="Component overview of the PythonLambda Operator"></p><p>The overview is composed of three horizontal layers:</p><ol><li>The first layer is what is installed with Metacontroller.</li><li>The second layer contains the PythonLambda operator components, which have to run before it can be used. This contains the implemented Composite Controller and the webhook service which calculates the desired state.</li><li>The third layer is the usage layer, where zero to multiple PythonLambda resources can be deployed and where the child resources end up based on the calculated desired state.</li></ol><p>The components are explained in more detail below:</p><h4 id=crd>CRD</h4><p>As the quote says, an Operator has a single object as interface.
+After defining the interface as a CRD and deploying that to the cluster, the developer can deploy resources of that type.</p><p>But first, here is the definition of the CRD:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>apiextensions.k8s.io/v1beta1</span>
+<span style=color:#f92672>kind</span>: <span style=color:#ae81ff>CustomResourceDefinition</span>
+<span style=color:#f92672>metadata</span>:
+  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>pythonlambdas.example.com</span>
+<span style=color:#f92672>spec</span>:
+  <span style=color:#f92672>group</span>: <span style=color:#ae81ff>example.com</span>
+  <span style=color:#f92672>version</span>: <span style=color:#ae81ff>v1</span>
+  <span style=color:#f92672>names</span>:
+    <span style=color:#f92672>kind</span>: <span style=color:#ae81ff>PythonLambda</span>
+    <span style=color:#f92672>plural</span>: <span style=color:#ae81ff>pythonlambdas</span>
+    <span style=color:#f92672>singular</span>: <span style=color:#ae81ff>pythonlambda</span>
+    <span style=color:#f92672>shortNames</span>:
+    - <span style=color:#ae81ff>py</span>
+  <span style=color:#f92672>scope</span>: <span style=color:#ae81ff>Namespaced</span>
+  <span style=color:#f92672>subresources</span>:
+    <span style=color:#f92672>status</span>: {}</code></pre></div><p>This YAML can be applied to your Kubernetes cluster like any other resource definition.
+While this is all that is needed to add your own resource definition, usually these manifests contain a <a href=https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#specifying-a-structural-schema>spec schema</a> defined in the <a href=https://www.openapis.org/>Open API</a> standard.
+Kubernetes will not accept manifests which do not follow the scheme.
+Sometimes they also contain <a href=https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/>different versions of the schema</a>, and even automatic version translations.
+We skip that to keep our example brief.</p><h4 id=controller>Controller</h4><p>Once developers deploy resources of our PythonLambda type, we have to act.
+This is where the <code>CompositeController</code> comes in:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>metacontroller.k8s.io/v1alpha1</span>
+<span style=color:#f92672>kind</span>: <span style=color:#ae81ff>CompositeController</span>
+<span style=color:#f92672>metadata</span>:
+  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>python-lambda-operator</span>
+  <span style=color:#f92672>namespace</span>: <span style=color:#ae81ff>python-lambda-operator</span>
+<span style=color:#f92672>spec</span>:
+  <span style=color:#f92672>generateSelector</span>: <span style=color:#66d9ef>true</span>
+  <span style=color:#f92672>parentResource</span>:
+    <span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>example.com/v1</span>
+    <span style=color:#f92672>resource</span>: <span style=color:#ae81ff>pythonlambdas</span>
+  <span style=color:#f92672>childResources</span>:
+  - <span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>v1</span>
+    <span style=color:#f92672>resource</span>: <span style=color:#ae81ff>configmaps</span>
+    <span style=color:#f92672>updateStrategy</span>:
+      <span style=color:#f92672>method</span>: <span style=color:#ae81ff>Recreate</span>
+  - <span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>v1</span>
+    <span style=color:#f92672>resource</span>: <span style=color:#ae81ff>services</span>
+    <span style=color:#f92672>updateStrategy</span>:
+      <span style=color:#f92672>method</span>: <span style=color:#ae81ff>Recreate</span>
+  - <span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>networking.k8s.io/v1beta1</span>
+    <span style=color:#f92672>resource</span>: <span style=color:#ae81ff>ingresses</span>
+    <span style=color:#f92672>updateStrategy</span>:
+      <span style=color:#f92672>method</span>: <span style=color:#ae81ff>InPlace</span>
+  - <span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>v1</span>
+    <span style=color:#f92672>resource</span>: <span style=color:#ae81ff>pods</span>
+    <span style=color:#f92672>updateStrategy</span>:
+      <span style=color:#f92672>method</span>: <span style=color:#ae81ff>Recreate</span>
+  <span style=color:#f92672>hooks</span>:
+    <span style=color:#f92672>sync</span>:
+      <span style=color:#f92672>webhook</span>:
+        <span style=color:#f92672>url</span>: <span style=color:#ae81ff>http://webhook-python-lambda-operator.python-lambda-operator/sync</span></code></pre></div><p>We define a controller of the type <code>CompositeController</code> and tell it to watch a certain parent resource type: the <code>pythonlambdas</code> type.
+We also define what kind of child resources can be created and managed under this parent resource.
+The following child resources are created:</p><ul><li><strong>ConfigMap</strong>: This is where the generated Python HTTP server script is stored, including the script of the developer.</li><li><strong>Pod</strong>: One or multiple <code>Pods</code> will run the Python script from the <code>ConfigMap</code>.</li><li><strong>Ingress</strong>: This allows us to expose our HTTP server to the outside.</li><li><strong>Service</strong>: The service is created to connect our <code>Ingress</code> to our <code>Pods</code>.</li></ul><p>Finally, the endpoint for the <code>sync</code> webhook is specified.
+This is the URL that will be called once a <code>PythonLambda</code> resource changes.
+In this case, it will call the <code>webhook-python-lambda-operator</code> <code>Service</code> in the <code>python-lambda-operator</code> namespace, on the <code>/sync</code> endpoint.</p><h4 id=webhook-service-implementation>Webhook service implementation</h4><p>Now we have to create an HTTP service which calculates the child resources based on changes of the <code>PythonLambda</code> resource.
+This service can be written in any programming language, as long as it has HTTP server capabilities.
+I have chosen Python as language, since it allows us to create an HTTP server containing the business logic in one file.
+A snippet of the webservice is shown below. The full script <a href=https://github.com/MartinKanters/python-lambda-operator/blob/master/operator/sync.py>can be found here</a>.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> BaseHTTPServer <span style=color:#f92672>import</span> BaseHTTPRequestHandler, HTTPServer
+<span style=color:#f92672>import</span> json
+
+<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Controller</span>(BaseHTTPRequestHandler):
+    
+  <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>do_POST</span>(self):
+    <span style=color:#75715e># Serve the sync() function as a JSON webhook.</span>
+    observed <span style=color:#f92672>=</span> json<span style=color:#f92672>.</span>loads(self<span style=color:#f92672>.</span>rfile<span style=color:#f92672>.</span>read(int(self<span style=color:#f92672>.</span>headers<span style=color:#f92672>.</span>getheader(<span style=color:#e6db74>&#34;content-length&#34;</span>))))
+    desired <span style=color:#f92672>=</span> self<span style=color:#f92672>.</span>sync(observed[<span style=color:#e6db74>&#34;parent&#34;</span>], observed[<span style=color:#e6db74>&#34;children&#34;</span>])
+
+    self<span style=color:#f92672>.</span>send_response(<span style=color:#ae81ff>200</span>)
+    self<span style=color:#f92672>.</span>send_header(<span style=color:#e6db74>&#34;Content-type&#34;</span>, <span style=color:#e6db74>&#34;application/json&#34;</span>)
+    self<span style=color:#f92672>.</span>end_headers()
+    self<span style=color:#f92672>.</span>wfile<span style=color:#f92672>.</span>write(json<span style=color:#f92672>.</span>dumps(desired))
+
+  <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>sync</span>(self, parent, children):
+    <span style=color:#75715e># get parent specs</span>
+    spec <span style=color:#f92672>=</span> parent<span style=color:#f92672>.</span>get(<span style=color:#e6db74>&#34;spec&#34;</span>, {})
+    lambda_code <span style=color:#f92672>=</span> spec<span style=color:#f92672>.</span>get(<span style=color:#e6db74>&#34;code&#34;</span>, <span style=color:#e6db74>&#34;&#34;</span>)
+    replicas <span style=color:#f92672>=</span> spec<span style=color:#f92672>.</span>get(<span style=color:#e6db74>&#34;replicas&#34;</span>, <span style=color:#ae81ff>1</span>)
+    host <span style=color:#f92672>=</span> spec<span style=color:#f92672>.</span>get(<span style=color:#e6db74>&#34;host&#34;</span>, <span style=color:#e6db74>&#34;localhost&#34;</span>)
+
+    <span style=color:#75715e># Compute status based on observed state.</span>
+    observed_status <span style=color:#f92672>=</span> {
+      <span style=color:#e6db74>&#34;configmaps&#34;</span>: len(children[<span style=color:#e6db74>&#34;ConfigMap.v1&#34;</span>]),
+      <span style=color:#e6db74>&#34;services&#34;</span>: len(children[<span style=color:#e6db74>&#34;Service.v1&#34;</span>]),
+      <span style=color:#e6db74>&#34;ingress&#34;</span>: len(children[<span style=color:#e6db74>&#34;Ingress.networking.k8s.io/v1beta1&#34;</span>]),
+      <span style=color:#e6db74>&#34;pods&#34;</span>: len(children[<span style=color:#e6db74>&#34;Pod.v1&#34;</span>])
+    }
+
+    <span style=color:#75715e># Generate the desired child object(s).</span>
+    desired_children <span style=color:#f92672>=</span> [self<span style=color:#f92672>.</span>create_config_map(parent, lambda_code)]
+    desired_children<span style=color:#f92672>.</span>append(self<span style=color:#f92672>.</span>create_service(parent))
+    desired_children<span style=color:#f92672>.</span>append(self<span style=color:#f92672>.</span>create_ingress(parent, host))
+    <span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(replicas):
+      desired_children<span style=color:#f92672>.</span>append(self<span style=color:#f92672>.</span>create_pod(parent, i))
+
+    <span style=color:#66d9ef>return</span> {<span style=color:#e6db74>&#34;status&#34;</span>: observed_status, <span style=color:#e6db74>&#34;children&#34;</span>: desired_children}
+
+  <span style=color:#f92672>...</span>
+
+HTTPServer((<span style=color:#e6db74>&#34;&#34;</span>, <span style=color:#ae81ff>80</span>), Controller)<span style=color:#f92672>.</span>serve_forever()</code></pre></div><p>Alright, there is already a lot to digest here. Before showing the methods that create the actual child manifests, let us first understand the two method at the top:</p><ul><li><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>do_POST</span>(self):</code></pre></div><p>The handler which is called when the POST request is invoked.
+It basically reads the request body as JSON and stores it in a variable called <code>observed</code>.
+This contains the monitored <code>PythonLambda</code> resource, along with any children that were perhaps created in earlier runs.
+It can also be seen as the <strong>Current State</strong>.
+Lastly, it calls the next method to prepare the HTTP response.</p></li><li><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>sync</span>(self, parent, children):</code></pre></div><p>This method is responsible for calculating the children based on the request data.
+This is called the <strong>Desired State</strong>.
+Metacontroller ensures to deploy the (changes of the) children to Kubernetes, when detecting differences.
+The method starts with reading in configuration from the spec part of the <code>PythonLambda</code>, then calculates some status object about the current state, and finally calls all methods for generating the desired state of the child resources.</p></li></ul><p>The snippet below shows two of the four methods generating child resources:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> BaseHTTPServer <span style=color:#f92672>import</span> BaseHTTPRequestHandler, HTTPServer
+<span style=color:#f92672>import</span> json
+
+<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Controller</span>(BaseHTTPRequestHandler):
+
+  <span style=color:#f92672>...</span>
+
+  <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>create_config_map</span>(self, parent, lambda_code):
+    indented_code <span style=color:#f92672>=</span> map(<span style=color:#66d9ef>lambda</span> line: <span style=color:#e6db74>&#34;    &#34;</span> <span style=color:#f92672>+</span> line, lambda_code<span style=color:#f92672>.</span>split(<span style=color:#e6db74>&#39;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#39;</span>))
+    lambda_code <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#39;</span><span style=color:#f92672>.</span>join(indented_code)
+    <span style=color:#66d9ef>return</span> {
+      <span style=color:#e6db74>&#34;apiVersion&#34;</span>: <span style=color:#e6db74>&#34;v1&#34;</span>,
+      <span style=color:#e6db74>&#34;kind&#34;</span>: <span style=color:#e6db74>&#34;ConfigMap&#34;</span>,
+      <span style=color:#e6db74>&#34;metadata&#34;</span>: {
+        <span style=color:#e6db74>&#34;name&#34;</span>: parent[<span style=color:#e6db74>&#34;metadata&#34;</span>][<span style=color:#e6db74>&#34;name&#34;</span>]
+      },
+      <span style=color:#e6db74>&#34;data&#34;</span>: {
+        <span style=color:#e6db74>&#34;script.py&#34;</span>: <span style=color:#e6db74>&#34;&#34;&#34;
+</span><span style=color:#e6db74>from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+</span><span style=color:#e6db74>import urlparse
+</span><span style=color:#e6db74>          
+</span><span style=color:#e6db74>class Controller(BaseHTTPRequestHandler):
+</span><span style=color:#e6db74>  def do_GET(self):
+</span><span style=color:#e6db74>    query_params = urlparse.parse_qs(urlparse.urlparse(self.path).query)
+</span><span style=color:#e6db74>  
+</span><span style=color:#e6db74>    output = &#34;&#34;
+</span><span style=color:#e6db74>    
+</span><span style=color:#e6db74>    # Begin lambda
+</span><span style=color:#e6db74></span><span style=color:#e6db74>%s</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>    # End lambda
+</span><span style=color:#e6db74>    
+</span><span style=color:#e6db74>    if output == &#34;&#34;:
+</span><span style=color:#e6db74>      output = &#34;Lambda output was empty&#34;
+</span><span style=color:#e6db74>    
+</span><span style=color:#e6db74>    self.send_response(200)
+</span><span style=color:#e6db74>    self.end_headers()
+</span><span style=color:#e6db74>    self.wfile.write(output)
+</span><span style=color:#e6db74>        
+</span><span style=color:#e6db74>HTTPServer((&#34;&#34;, 80), Controller).serve_forever()
+</span><span style=color:#e6db74>        &#34;&#34;&#34;</span> <span style=color:#f92672>%</span> lambda_code
+      }
+    }
+
+  <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>create_pod</span>(self, parent, i):
+    <span style=color:#66d9ef>return</span> {
+      <span style=color:#e6db74>&#34;apiVersion&#34;</span>: <span style=color:#e6db74>&#34;v1&#34;</span>,
+      <span style=color:#e6db74>&#34;kind&#34;</span>: <span style=color:#e6db74>&#34;Pod&#34;</span>,
+      <span style=color:#e6db74>&#34;metadata&#34;</span>: {
+        <span style=color:#e6db74>&#34;name&#34;</span>: <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>-</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#34;</span> <span style=color:#f92672>%</span> (parent[<span style=color:#e6db74>&#34;metadata&#34;</span>][<span style=color:#e6db74>&#34;name&#34;</span>], i),
+        <span style=color:#e6db74>&#34;labels&#34;</span>: {
+          <span style=color:#e6db74>&#34;app&#34;</span>: parent[<span style=color:#e6db74>&#34;metadata&#34;</span>][<span style=color:#e6db74>&#34;name&#34;</span>]
+        }
+      },
+      <span style=color:#e6db74>&#34;spec&#34;</span>: {
+        <span style=color:#e6db74>&#34;restartPolicy&#34;</span>: <span style=color:#e6db74>&#34;OnFailure&#34;</span>,
+        <span style=color:#e6db74>&#34;containers&#34;</span>: [
+          {
+            <span style=color:#e6db74>&#34;name&#34;</span>: <span style=color:#e6db74>&#34;hello&#34;</span>,
+            <span style=color:#e6db74>&#34;image&#34;</span>: <span style=color:#e6db74>&#34;python:2.7&#34;</span>,
+            <span style=color:#e6db74>&#34;command&#34;</span>: [<span style=color:#e6db74>&#34;python&#34;</span>, <span style=color:#e6db74>&#34;/scripts/script.py&#34;</span>],
+            <span style=color:#e6db74>&#34;volumeMounts&#34;</span>: [
+              {
+                <span style=color:#e6db74>&#34;name&#34;</span>: <span style=color:#e6db74>&#34;script&#34;</span>,
+                <span style=color:#e6db74>&#34;mountPath&#34;</span>: <span style=color:#e6db74>&#34;/scripts&#34;</span>
+              }
+            ]
+          }
+        ],
+        <span style=color:#e6db74>&#34;volumes&#34;</span>: [
+          {
+            <span style=color:#e6db74>&#34;name&#34;</span>: <span style=color:#e6db74>&#34;script&#34;</span>,
+            <span style=color:#e6db74>&#34;configMap&#34;</span>: {
+              <span style=color:#e6db74>&#34;name&#34;</span>: parent[<span style=color:#e6db74>&#34;metadata&#34;</span>][<span style=color:#e6db74>&#34;name&#34;</span>]
+            }
+          }
+        ]
+      }
+    }
+
+  <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>create_service</span>(self, parent):
+    <span style=color:#66d9ef>return</span> {
+      <span style=color:#e6db74>&#34;apiVersion&#34;</span>: <span style=color:#e6db74>&#34;v1&#34;</span>,
+      <span style=color:#e6db74>&#34;kind&#34;</span>: <span style=color:#e6db74>&#34;Service&#34;</span>,
+      <span style=color:#f92672>...</span>
+
+  <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>create_ingress</span>(self, parent, host):
+    <span style=color:#66d9ef>return</span> {
+      <span style=color:#e6db74>&#34;apiVersion&#34;</span>: <span style=color:#e6db74>&#34;networking.k8s.io/v1beta1&#34;</span>,
+      <span style=color:#e6db74>&#34;kind&#34;</span>: <span style=color:#e6db74>&#34;Ingress&#34;</span>,
+      <span style=color:#f92672>...</span>
+
+HTTPServer((<span style=color:#e6db74>&#34;&#34;</span>, <span style=color:#ae81ff>80</span>), Controller)<span style=color:#f92672>.</span>serve_forever()</code></pre></div><p>Let us take a look at those methods:</p><ul><li><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>create_config_map</span>(self, parent, lambda_code):</code></pre></div><p>This method generates the Python script for starting an HTTP Server (seems familiar?), where the custom script of the developer (<code>lambda_code</code>) is concatenated into the <code>GET</code> method handler.</p></li><li><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>create_pod</span>(self, parent, i):</code></pre></div><p>This method generates the <code>Pod</code> which contains a container built from a Python image.
+The <code>ConfigMap</code> of above is mounted in the container in order for the container to run it.
+The parameter <code>i</code> is passed to it, because multiple <code>Pods</code> can be generated based on the number of replicas the developer configures.
+It is a number which will be added as suffix to the <code>Pod</code> name.</p></li></ul><h2 id=lets-run-it>Let&rsquo;s run it!</h2><p>Now we&rsquo;ve got all pieces for running our <code>PythonLambda</code> with some custom code.
+Here is an example which reads in the <code>name</code> query parameter, reverses that and writes that to the response body:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>example.com/v1</span>
+<span style=color:#f92672>kind</span>: <span style=color:#ae81ff>PythonLambda</span>
+<span style=color:#f92672>metadata</span>:
+  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>demo-python-lambda</span>
+  <span style=color:#f92672>namespace</span>: <span style=color:#ae81ff>python-lambda-operator</span>
+<span style=color:#f92672>spec</span>:
+  <span style=color:#f92672>code</span>: |<span style=color:#e6db74>
+</span><span style=color:#e6db74>    name = query_params.get(&#34;name&#34;, [&#34;World&#34;])[0]
+</span><span style=color:#e6db74>    reverse_name = name[::-1]
+</span><span style=color:#e6db74>    output = &#34;Hello %s! Your name in reverse is %s&#34; % (name, reverse_name)</span>    
+  <span style=color:#f92672>replicas</span>: <span style=color:#ae81ff>2</span>
+  <span style=color:#f92672>host</span>: <span style=color:#ae81ff>example.com</span></code></pre></div><p>As explained in the &ldquo;webhook service implementation&rdquo; chapter, the three lines of code are combined with a Python HTTP Server template and put in a <code>ConfigMap</code>.
+The <code>replicas</code> parameter ensures that two <code>Pods</code> are spun up running the code from the <code>ConfigMap</code>.
+An <code>Ingress</code> resource is configured for the <code>example.com</code> host.</p><p>Now the following request can be done:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>$ curl -XGET example.com?name<span style=color:#f92672>=</span>Martin
+Hello Martin! Your name in reverse is nitraM</code></pre></div><h1 id=conclusion>Conclusion</h1><p>While it certainly looks like a lot of code for a blog post, it really is not a lot for what you get back for it.
+Metacontroller allows you to easily extend Kubernetes with powerful features, using simple APIs.
+If you think this was interesting, I encourage you to read about the <a href=https://metacontroller.github.io/metacontroller/api/decoratorcontroller.html>Decorator Controller</a>.
+This allows for changing the parent resource, in contrary to managing its children.
+<a href=https://metacontroller.github.io/metacontroller/api/customize.html>Customize Hooks</a> (currently only) allows for enhancing the webhook requests with related resources.
+This is extremely useful for when desired state should be calculated based on other resources than the parent and child resources.
+Once a watched resources gets deleted, the <a href=https://metacontroller.github.io/metacontroller/api/decoratorcontroller.html#finalize-hook>finalize hook</a> allows you to clean up resources any way you like.</p><p>I&rsquo;m very excited about this piece of technology, I hope I&rsquo;ve conveyed some of this enthusiasm to you as well!</p></div><div class=post-footer><div class=info></div></div></div></div></div></div><script type=text/javascript src=/js/medium-zoom.min.83cb1dd5fea8d42d87d1e601a07faa73089ad0ef9ccfe5daf6041289ebcc4e46.js integrity="sha256-g8sd1f6o1C2H0eYBoH+qcwia0O+cz+Xa9gQSievMTkY=" crossorigin=anonymous></script><script async src="https://www.googletagmanager.com/gtag/js?id=G-XVJ8L7CN7V"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-XVJ8L7CN7V')</script></body></html>
