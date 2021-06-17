@@ -47,7 +47,7 @@ gtagId = "G-XVJ8L7CN7V" # google analytics
   [[params.socialIcons]]
   icon = "fab fa-linkedin"
   title = "LinkedIn"
-  url = "https://www.linkedin.com/in/martin-kanters-54b04464/"
+  url = "https://www.linkedin.com/in/martinkanters/"
 
 [menu]
 
