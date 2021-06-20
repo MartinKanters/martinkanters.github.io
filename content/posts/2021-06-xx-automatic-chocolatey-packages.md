@@ -2,6 +2,7 @@
 title: "Automatically managing Chocolatey packages"
 url: automatically-managing-chocolatey-packages
 date: 2021-06-01T00:00:00+02:00 # TODO
+draft: true
 ---
 
 One of the important things of contributing to Open Source software is trying out bleeding edge builds.
