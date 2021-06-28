@@ -54,15 +54,37 @@ choco upgrade maven-snapshot -Y
 choco uninstall maven-snapshot -Y
 ```
 
-Do not be fooled though, not only developer tools can be installed with it, but also applications like [Google Chrome](https://community.chocolatey.org/packages/GoogleChrome), [Zoom](https://community.chocolatey.org/packages/zoom), [GIMP](https://community.chocolatey.org/packages/gimp) and many more!
+Don't be fooled though, not only developer tools can be installed with it, but also applications like [Google Chrome](https://community.chocolatey.org/packages/GoogleChrome), [Zoom](https://community.chocolatey.org/packages/zoom), [GIMP](https://community.chocolatey.org/packages/gimp) and many more!
 
+# Development
+Before we can automatically update and build the package, we should develop an initial version first. 
+This article will not dive deep into developing it, but I felt the article would not be complete without at least covering it a bit.
+Another reason for not diving deep into the development part is because Chocolatey has [extensive documentation](https://docs.chocolatey.org/en-us/create/create-packages) itself.
+I suggest you to follow these docs when you are serious about creating a package, it helped me out a great bit. 
 
+One of the important things to realize is that you will be needing some Powershell experience. 
+Only in the event where you package the binaries inside of the Chocolatey package, you might not need any of the following scripts. 
+Otherwise, a Chocolatey package typically contains three scripts:
+ - `chocolateyInstall.ps1` - This powershell script will be run when someone invokes `choco install <your-package>`. It will also run again when someone upgrades the package.
+ - `chocolateyBeforeModify.ps1` - This script will run when someone upgrades or uninstalls the package. This allows developers to prepare an installation for modification. 
+ - `chocolateyUninstall.ps1` - When a user uninstalls a package, this will be run after `chocolateyBeforeModify.ps1` ran (if present).
 
+The installation script can download binaries from the internet and install it. 
+Chocolatey offers modules which can help with this, for example `Install-ChocolateyZipPackage`. 
+This module expects you to add a checksum of the file that will be downloaded during the install script.
+With this, the user is protected against any man-in-the-middle attacks, or just broken downloads. 
 
+Other things will typically need to be done in these scripts, such as changing the environment variables and other things which completes the installation.
+Take care, since Powershell scripts can pretty much change anything in your system, errors can be disastrous. 
+To be safe, you can develop these scripts in a Virtual Machine. 
 
-
+# Automation
+--- TODO: Github Actions  
 --- TODO: Handling the client secret  
---- TODO: Shoutout to official choco package
-
 --- TODO: Automatic testing/verification  
+--- TODO: Mailing notifications  
 --- TODO: What to do when flakiness occurs  
+
+# Lastly
+
+--- TODO: Shoutout to official choco package
