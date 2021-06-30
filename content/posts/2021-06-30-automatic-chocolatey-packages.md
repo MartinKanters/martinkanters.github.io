@@ -1,6 +1,6 @@
 ---
-title: "Automatically managing Chocolatey packages"
-url: automatically-managing-chocolatey-packages
+title: "Automatic zero-maintenance Chocolatey packages builds"
+url: automatic-zero-maintenance-chocolatey-packages-builds
 date: 2021-06-30T20:14:00+02:00
 ---
 
