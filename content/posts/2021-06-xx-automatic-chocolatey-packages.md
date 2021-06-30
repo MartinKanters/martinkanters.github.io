@@ -109,10 +109,31 @@ Maven-snapshot's workflow basically does the following things:
 View the [source](https://github.com/MartinKanters/ChocolateyPackages/blob/master/.github/workflows/maven-snapshot-update.yml) here, and see it in _action_ [here](https://github.com/MartinKanters/ChocolateyPackages/actions).
 
 ## Chocolatey's testing and verification stages
---- TODO: Automatic testing/verification  
---- TODO: Mailing notifications  
---- TODO: What to do when flakiness occurs  
+After pushing the newly built package, it might take some time before it is publicly listed. 
+In the meantime people can already that version, but they will have to specify it with a flag in the install command: `choco install maven-snapshot --version=20210625.1907`.
+It takes some time to get listed, because Chocolatey has some automated checks which verifies whether the package is correct.
+They for example install and uninstall the package to make sure it works correctly.
+Usually this is done in about half an hour.
 
-# Lastly
---- TODO: Shoutout to official choco package and maarten's package again  
---- TODO: Add that it is a fun little project, and that it can definitely be improved.
+Unfortunately, when your package is really new, it will also be checked manually by a Chocolatey moderator. 
+This process really takes substantial amount of time, probably because there are too many packages and too little moderators.
+For my package this often took more than a week and up to three weeks before it was approved. 
+For packages that do not get updated often, this might be just fine.
+The aim for maven-snapshot is to allow people to easily download the most recent snapshot build, so waiting for weeks is not desirable.
+Luckily, after about one and a half month, the package became a [trusted package](https://docs.chocolatey.org/en-us/faqs#what-is-a-trusted-package), which means it skips manual tests. 
+
+When a package gets uploaded and does not pass the stages, Chocolatey asks you to create a correct package and reupload that. 
+For an automated process, that is quite annoying... especially when a later snapshot build has already been packaged and uploaded in the meantime on a newer version number. 
+In that case, depending on where it failed in the automatic testing process, you can either unlist the package yourself or leave a note to a moderator asking for it to be removed.
+
+# Summarizing
+So, in this article I explained how you can automate your build pipeline around Chocolatey packages.
+I used the Chocolatey package for [maven-snapshot](https://chocolatey.org/packages/maven-snapshot) as example. 
+Although it's developed by me, I took a lot of inspiration from [@mthmulders](https://twitter.com/mthmulders)'s [homebrew package](https://github.com/mthmulders/homebrew-maven-snapshot) and the original [Maven Chocolatey package](https://community.chocolatey.org/packages/maven).
+The article mentions how to use a pipeline tool like GitHub Actions to detects new versions, tests, packs and uploads them to Chocolatey. 
+Then Chocolatey continues the testing progress, before listing them publicly. 
+Finally, you have got yourself an automatically maintained Chocolatey package!
+Congrats!
+
+... Oh and one more automation tip, make sure to create some email filters for the mail notifications from Chocolatey. 
+They can be pretty noisy. :) 
