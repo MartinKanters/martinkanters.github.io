@@ -1,8 +1,7 @@
 ---
 title: "Automatically managing Chocolatey packages"
 url: automatically-managing-chocolatey-packages
-date: 2021-06-01T00:00:00+02:00 # TODO
-draft: true
+date: 2021-06-30T20:14:00+02:00
 ---
 
 One of the important things of contributing to Open Source software is trying out bleeding edge builds.
@@ -141,4 +140,4 @@ I bet you can do better!
 
 _... Oh and one more Chocolatey tip, make sure to create some email filters for their mail notifications. They can be pretty noisy. :)_
 
-I hope this helped, or at least was a nice read, and I would like to thank you for reading!
+I hope this helped, or at least was a nice read. Either way, I would like to thank you for reading!
