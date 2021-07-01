@@ -1,6 +1,8 @@
 ---
-title: "Automatic zero-maintenance Chocolatey packages builds"
-url: automatic-zero-maintenance-chocolatey-packages-builds
+title: "Automatic zero-maintenance Chocolatey package builds"
+url: automatic-zero-maintenance-chocolatey-package-builds
+aliases:
+  - automatic-zero-maintenance-chocolatey-packages-builds
 date: 2021-06-30T20:14:00+02:00
 ---
 
