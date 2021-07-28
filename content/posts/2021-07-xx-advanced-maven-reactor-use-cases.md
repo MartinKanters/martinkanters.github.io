@@ -51,11 +51,11 @@ But, modules in a project often depend on others... which also should be rebuilt
 Maven luckily can easily take care of that for you: `-am` and `-amd` are created for that. 
 
 ### Examples
-1. `mvn <goal> -pl module-b -am`  
-  results in Maven building `module-b` and then `module-c-2`.
-
-2. `mvn <goal> -pl module-c-2 -amd`  
+1. `mvn <goal> -pl module-c-2 -am`  
   results in Maven building `parent`, `module-c`, `module-a`, `module-b` and finally `module-c-2`.
+
+2. `mvn <goal> -pl module-b -amd`  
+  results in Maven building `module-b` and then `module-c-2`.
 
 ## 2. Excluding the project we are resuming from
 
@@ -75,19 +75,38 @@ It could result in the later module including an old artifact from the local rep
 
 ### Examples
 
-1. `mvn -rf :module-b -pl !:module-b`  
+1. `mvn <goal> -rf :module-b -pl !:module-b`  
   results in Maven building just `module-c-2`.
 
 2. _(Assuming `module-b` failed in an earlier run)_  
-  `mvn test -r -pl !:module-b`  
+  `mvn <goal> -r -pl !:module-b`  
   results in Maven building just `module-c-2`.
 
-Excluding an also make dependency from selectedProject does take its transitive dependency
-Excluding an also make dependency from resumeFrom does take its transitive dependency
+## 3. Excluding a module activated by also-make does take its transitive dependencies
 
-Selected project with resume from and also make dependency (MNG-4960 IT#1)
-Selected project with resume from and also make dependent (MNG-4960 IT#2)
+It gets trickier here. 
 
+Remember that `--also-make` or `-am` also builds all inter-module dependencies of a selected module?
+Because the reactor first handles including modules (in several ways), and finally excludes modules, it's possible to exclude a dependency in the transitive (multi-module) dependency graph.
+The examples below expand on the first example of use-case 1 (combining `-pl` and `-am`).
 
-# TODO - link to defaultgraphbuildertests
+Now, why this is useful... I don't know. I haven't encountered a valid use-case for it yet. 
+But since Maven is used in so many different forms, I'm sure it's useful somewhere! 
+
+### Examples
+1. `mvn <goal> -pl :module-c-2,!:module-b -am`  
+  results in Maven building `parent`, `module-c`, `module-a` and finally `module-c-2`.
+
+2. `mvn <goal> -rf :module-c-2 -pl !:module-b -am`  
+  also results in Maven building `parent`, `module-c`, `module-a` and finally `module-c-2`.
+
+# Conclusion
+
+In this article I showed you how to combine several CLI flags to unlock advanced behavior in the Maven reactor. 
+Even though it might not be applicable directly, perhaps it helped you understand the way how the Maven parses the flags. 
+All of these exotic cases, but also the usual ones, are [covered in unit tests](https://github.com/apache/maven/blob/master/maven-core/src/test/java/org/apache/maven/graph/DefaultGraphBuilderTest.java#L73), which should be pretty easy to interpret.
+Can you find other exotic ones? 
+Please let us know if we are still missing test cases! 
+Either in a PM, JIRA issue or a direct PR ;) 
+
 # TODO - fix syntax highlighting of single-line code snippets
