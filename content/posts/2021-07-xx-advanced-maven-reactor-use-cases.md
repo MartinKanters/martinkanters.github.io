@@ -1,5 +1,5 @@
 ---
-title: "Advanced Maven Reactor use-cases" # todo revisit title (use-cases -> edge cases?)
+title: "Advanced Maven Reactor use-cases" # todo revisit title (use-cases -> edge cases? -> behaviour?)
 url: advanced-maven-reactor-use-cases
 date: 2021-06-30T20:14:00+02:00 # todo
 draft: true
@@ -8,14 +8,14 @@ draft: true
 For all folks using Maven, and especially those who use multi module projects, Maven 4 will be a treat for you.
 I had the opportunity to work together with [@mthmulders](https://twitter.com/mthmulders) on several issues and bug fixes around the Maven reactor.
 The reactor is the backbone of multi module projects in Maven. 
-Most of the things you need to know about the reactor is [documented here](https://maven.apache.org/guides/mini/guide-multiple-modules-4.html).
+Most of the things you need to know about the reactor are [documented here](https://maven.apache.org/guides/mini/guide-multiple-modules-4.html).
 In this article I would like to show you the real advanced use-cases. 
 It's a collection of use-cases of which some are useful, some are rarely needed and some are just so exotic you should question yourself what you are actually doing.
 
 # Maven Reactor
 
 In Maven, you can control most of how Maven builds multi module projects using CLI flags. 
-Most of the use-cases you will find below are based on the combination of those flags. 
+The use-cases you will find below are based on the combination of those flags. 
 First, a short summary of the relevant ones (taken from the [original docs](https://maven.apache.org/guides/mini/guide-multiple-modules-4.html)):
 
 | Long | Short | Description |
@@ -28,10 +28,16 @@ First, a short summary of the relevant ones (taken from the [original docs](http
 
 # Project structure
 
-The use-cases below will take the following project structure in mind. 
-To keep it easy, the same project structure is used as the [original docs](https://maven.apache.org/guides/mini/guide-multiple-modules-4.html).
+The use-cases will take the following project structure in mind. 
+To keep it easy, the project structure is equal to the one from the [original docs](https://maven.apache.org/guides/mini/guide-multiple-modules-4.html).
 
 ![Multi module project structure](/images/posts/maven-reactor-advanced-use-cases-project.png "Multi module project structure")
+
+The upcoming use-cases are based on the [unit tests from Maven itself](https://github.com/apache/maven/blob/master/maven-core/src/test/java/org/apache/maven/graph/DefaultGraphBuilderTest.java#L73).
+Important to note is the project order. That is calculated based on the dependencies within the project and the order in POM, in this case it is the following:  
+`parent`, `module-c`, `module-c-1`, `module-a`, `module-b` and `module-c-2`.
+
+You can find the [test project on GitHub](https://github.com/MartinKanters/maven-4-reactor-example/tree/maven-unit-test-module-order).
 
 # Use-cases
 
@@ -51,10 +57,10 @@ But, modules in a project often depend on others... which also should be rebuilt
 Maven luckily can easily take care of that for you: `-am` and `-amd` are created for that. 
 
 ### Examples
-1. `mvn <goal> -pl module-c-2 -am`  
+1. `mvn validate -pl :module-c-2 -am`  
   results in Maven building `parent`, `module-c`, `module-a`, `module-b` and finally `module-c-2`.
 
-2. `mvn <goal> -pl module-b -amd`  
+2. `mvn validate -pl :module-b -amd`  
   results in Maven building `module-b` and then `module-c-2`.
 
 ## 2. Excluding the project we are resuming from
@@ -75,11 +81,11 @@ It could result in the later module including an old artifact from the local rep
 
 ### Examples
 
-1. `mvn <goal> -rf :module-b -pl !:module-b`  
+1. `mvn validate -rf :module-b -pl !:module-b`  
   results in Maven building just `module-c-2`.
 
 2. _(Assuming `module-b` failed in an earlier run)_  
-  `mvn <goal> -r -pl !:module-b`  
+  `mvn validate -r -pl !:module-b`  
   results in Maven building just `module-c-2`.
 
 ## 3. Excluding a module activated by also-make does take its transitive dependencies
@@ -94,10 +100,10 @@ Now, why this is useful... I don't know. I haven't encountered a valid use-case 
 But since Maven is used in so many different forms, I'm sure it's useful somewhere! 
 
 ### Examples
-1. `mvn <goal> -pl :module-c-2,!:module-b -am`  
+1. `mvn validate -pl :module-c-2,!:module-b -am`  
   results in Maven building `parent`, `module-c`, `module-a` and finally `module-c-2`.
 
-2. `mvn <goal> -rf :module-c-2 -pl !:module-b -am`  
+2. `mvn validate -rf :module-c-2 -pl !:module-b -am`  
   also results in Maven building `parent`, `module-c`, `module-a` and finally `module-c-2`.
 
 # Conclusion
@@ -106,7 +112,8 @@ In this article I showed you how to combine several CLI flags to unlock advanced
 Even though it might not be applicable directly, perhaps it helped you understand the way how the Maven parses the flags. 
 All of these exotic cases, but also the usual ones, are [covered in unit tests](https://github.com/apache/maven/blob/master/maven-core/src/test/java/org/apache/maven/graph/DefaultGraphBuilderTest.java#L73), which should be pretty easy to interpret.
 Can you find other exotic ones? 
+
+I have pushed the [test project to GitHub](https://github.com/MartinKanters/maven-4-reactor-example/tree/maven-unit-test-module-order).
+All examples from above should work there when run with Maven 4.
 Please let us know if we are still missing test cases! 
 Either in a PM, JIRA issue or a direct PR ;) 
-
-# TODO - fix syntax highlighting of single-line code snippets
