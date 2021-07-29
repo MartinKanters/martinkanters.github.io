@@ -25,6 +25,7 @@ First, a short summary of the relevant ones (taken from the [original docs](http
 | `--also-make` | `-am` |	Builds the specified modules, and any of their dependencies in the reactor. |
 | `--also-make-dependents` | `-amd` | Builds the specified modules, and any that depend on them. |
 | `--resume-from` | `-rf` | Resumes a reactor from the specified project (e.g. when it fails in the middle). |
+| `--resume` | `-r` | Resumes a reactor from the module where the previous build failed. |
 
 # Project structure
 
