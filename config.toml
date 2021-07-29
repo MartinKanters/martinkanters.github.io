@@ -22,6 +22,8 @@ occassionally blogs about
 his tech endeavours
 """
 
+customCss = ["css/custom.css"]
+
 profilePicture = "images/avatar.png"
 gtagId = "G-XVJ8L7CN7V" # google analytics
 
