@@ -1,8 +1,7 @@
 ---
-title: "Advanced Maven Reactor use-cases" # todo revisit title (use-cases -> edge cases? -> behaviour?)
+title: "Advanced Maven Reactor use-cases"
 url: advanced-maven-reactor-use-cases
-date: 2021-06-30T20:14:00+02:00 # todo
-draft: true
+date: 2021-07-29T21:08:00+02:00
 ---
 
 For all folks using Maven, and especially those who use multi module projects, Maven 4 will be a treat for you.
