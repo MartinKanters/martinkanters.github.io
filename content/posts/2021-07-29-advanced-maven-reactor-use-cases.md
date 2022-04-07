@@ -63,7 +63,21 @@ Maven luckily can easily take care of that for you: `-am` and `-amd` are created
 2. `mvn validate -pl :module-b -amd`  
   results in Maven building `module-b` and then `module-c-2`.
 
-## 2. Excluding the project we are resuming from
+## 2. Build all needed modules, except for the module itself
+
+Among others, Gunnar Morling [asked on Twitter](https://twitter.com/gunnarmorling/status/1463792047316520965) whether it's possible to run all tests for a specific module, but before that, build all of its needed dependencies. As we learned in use case #1, the goal (like `compile` or `test`) is ran for every module in the reactor, but he requested to only run the tests for the specified module. 
+
+One option is to create a profile for this, skipping the test goal for all modules except the specific one. But Gunnar mentioned that he would like to be flexible, so profiles will not work. Another option is to specify in the CLI flags to just run tests in a certain package. This is possible, but you would need to have specific packages per dependency (which is a good idea anyway), but also have to remember them from heart when running the command...
+
+Unfortunately it's not possible to solve this in one Maven invocation, but customizing the reactor definitely helps.
+We can make use of the fact that Maven first selects all modules into the reactor before it removes unwanted modules.
+
+### Examples
+
+1. `mvn compile -pl :module-b,!:module-b -am && mvn test -pl :module-b`  
+  results in the first Maven invocation to compile `parent` and `module-a` and the second to test `module-b`.
+
+## 3. Excluding the module we are resuming from
 
 When a multi module project fails building somewhere halfway, Maven 3 shows a hint how to continue the build:
 
@@ -88,7 +102,7 @@ It could result in the later module including an old artifact from the local rep
   `mvn validate -r -pl !:module-b`  
   results in Maven building just `module-c-2`.
 
-## 3. Excluding a module activated by also-make does take its transitive dependencies
+## 4. Excluding a module activated by also-make does take its transitive dependencies
 
 It gets trickier here. 
 
